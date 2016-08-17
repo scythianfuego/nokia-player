@@ -1,0 +1,222 @@
+<html>
+<head>
+    <script>
+
+    var audioCtx = new (window.AudioContext || window.webkitAudioContext || window.audioContext);
+
+    function beep(duration, frequency) {
+        var oscillator = audioCtx.createOscillator();
+        var gainNode = audioCtx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        gainNode.gain.value = 0.5; //volume
+        oscillator.frequency.value = frequency;
+        oscillator.type = 'sawtooth';
+        oscillator.start();
+        setTimeout(function(){oscillator.stop()}, (duration ? duration : 100));
+    };
+
+    var TunePlayer = function(tuneString) {
+        var self = this;
+        this.tempo = 120;
+
+        var tune = tuneString.trim().match(/[0-9]+\.?[\#\-A-z]+[0-9]?/g);
+        this.notes = tune.map(function(item){
+            var result = {
+                noteRaw : item
+            };
+            var durationString = item.match(/[0-9]+\.?/)[0];
+            result.duration = self.durationFromNote(durationString, self.tempo);    ///milliseconds
+            item = item.replace(durationString, '');
+            result.noteString = item.match(/[\#\-A-z]+/)[0];
+            item = item.replace(result.noteString, '');
+            result.octave = item | 0;
+            return result;
+        })
+        console.log(this.notes);
+        //this.tune =
+    }
+
+    TunePlayer.prototype.durationFromNote = function(note, tempo) {
+
+        var noteValue = (note | 0);
+        if (note.substr(-1) === ".") {
+            noteValue -= noteValue / 2;
+        }
+
+        return (240000 / (tempo * noteValue)) | 0; //magic: (60/tempo) / (noteName/4) * 1000ms
+    };
+
+    TunePlayer.prototype.frequencyFromNote = function(note, octave) {
+        var indices = ['c', '#c', 'd', '#d', 'e', 'f', '#f', 'g', '#g', 'a', '#a', 'b'];
+        var index = indices.indexOf(note.toLowerCase()) - 9;    //9 is index of A note
+        index += (octave) * 12;
+        var frequency = Math.pow(2, index/12) * 440;
+        return frequency;
+    };
+
+    TunePlayer.prototype.stop = function () {
+        this.stopping = true;
+    };
+
+    TunePlayer.prototype.play = function(onComplete, onNotePlayed) {
+        console.log(this.tune);
+        var self = this;
+        var noteIndex = 0;
+
+        var tryPlayNote = function(){
+            var note = self.notes[noteIndex];
+            if (onNotePlayed) {
+                onNotePlayed(note);
+            }
+
+            //temp stackoverflow beep
+            if (note.noteString !== '-')
+                beep(note.duration, self.frequencyFromNote(note.noteString, note.octave));
+
+            noteIndex++;
+            if (noteIndex === self.notes.length) {
+                if (onComplete) {
+                    onComplete();
+                }
+            } else {
+                if (!self.stopping) {
+                    setTimeout(tryPlayNote, note.duration);
+                } else {
+                    self.stopping = false;
+                }
+            }
+
+        }
+        //finite state machine
+
+        tryPlayNote();
+
+    };
+    </script>
+    <script>
+
+        var player = null;
+
+        function onPlayButtonClick() {
+
+            var btn = event.target;
+            btn.innerHTML = "Stop";
+            var tune = document.getElementById("tune").value;
+
+            if (!player) {
+                player = new TunePlayer(tune);
+                player.play(function(){
+                    btn.innerHTML = "Play";
+                    player = null;
+                    document.getElementById("currentNote").innerHTML = "";
+                }, function(note) {
+                    document.getElementById("currentNote").innerHTML = note.noteRaw.toUpperCase();
+                });
+            } else {
+                btn.innerHTML = "Play";
+                document.getElementById("currentNote").innerHTML = "";
+                player.stop();
+                player = null;
+            }
+
+        }
+
+        function onInput() {
+            var tune = document.getElementById("tune").value;
+            document.getElementById("tune").value = tune.trim().toLowerCase();
+        }
+    </script>
+    <style>
+        .nokia3310top {
+            color: #fff;
+            border: 10px solid #444A5D;
+            background: #444A5D;
+            text-align: center;
+            border-top-right-radius: 20px;
+            border-top-left-radius: 20px;
+        }
+        .nokia3310middle {
+            background: #5aa02e;
+            padding: 10px;
+            border: 20px solid #444A5D;
+            border-top: 10px solid #444A5D;
+            width:auto;
+            font-size: 1rem;
+            position: relative;
+        }
+        .nokia3310bottom {
+            color: #fff;
+            border: 10px solid #444A5D;
+            background: #444A5D;
+            text-align: center;
+            border-bottom-right-radius: 20px;
+            border-bottom-left-radius: 20px;
+            height: 120px;
+        }
+
+        .nokia3310 {
+            display:inline-block;
+        }
+        textarea {
+            border: none;
+            background: transparent;
+            padding: 0;
+            margin: 0;
+            user-select: all;
+            -moz-user-select: all;
+            -webkit-user-select: all;
+            -ms-user-select: all;
+        }
+        textarea, .nokia3310, .playButton {
+            font-family: Courier;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+        .playButton {
+            cursor: pointer;
+            text-align: center;
+        }
+        .notes {
+            font-size: 1.2rem;
+        }
+        .currentNote {
+            font-size: 1.2rem;
+            font-family: Courier;
+            font-weight: bold;
+            position: absolute;
+            right: 10px;
+            top: 10px;
+        }
+        textarea::selection {
+          background: #000; /* WebKit/Blink Browsers */
+          color: #5aa02e;
+        }
+        textarea::-moz-selection {
+          background: #000; /* Gecko Browsers */
+          color: #5aa02e;
+        }
+        body {
+            user-select: none;
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="nokia3310">
+        <div class="nokia3310top"><!-- AIʞOИ --></div>
+        <div class="nokia3310middle">
+            <div class="notes">&#x1d15e; &#x2669; &#x266A; </div>
+            <div id="currentNote" class="currentNote"></div>
+            <textarea id="tune" oninput="onInput()" rows="8" cols="16">16e2 16d2 8#f1 8#g1 16#c2 16b1 8d1 8e1 16b1 16a1 8#c1 8e1 4a1
+            </textarea>
+            <div class="playButton" onclick="onPlayButtonClick()">Play</div>
+        </div>
+        <div class="nokia3310bottom">OIEE</div>
+    </div>
+    <br>
+    <br>
+</body>
+</html>
