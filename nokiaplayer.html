@@ -98,7 +98,7 @@
 
         var player = null;
 
-        function onPlayButtonClick() {
+        function onPlayButtonClick(event) {
 
             var btn = event.target;
             btn.innerHTML = "Stop";
@@ -122,7 +122,7 @@
 
         }
 
-        function onInput() {
+        function onInput(event) {
             var tune = document.getElementById("tune").value;
             document.getElementById("tune").value = tune.trim().toLowerCase();
         }
@@ -210,9 +210,9 @@
         <div class="nokia3310middle">
             <div class="notes">&#x1d15e; &#x2669; &#x266A; </div>
             <div id="currentNote" class="currentNote"></div>
-            <textarea id="tune" oninput="onInput()" rows="8" cols="16">16e2 16d2 8#f1 8#g1 16#c2 16b1 8d1 8e1 16b1 16a1 8#c1 8e1 4a1
+            <textarea id="tune" oninput="onInput(event)" rows="8" cols="16">16e2 16d2 8#f1 8#g1 16#c2 16b1 8d1 8e1 16b1 16a1 8#c1 8e1 4a1
             </textarea>
-            <div class="playButton" onclick="onPlayButtonClick()">Play</div>
+            <div class="playButton" onclick="onPlayButtonClick(event)">Play</div>
         </div>
         <div class="nokia3310bottom">OIEE</div>
     </div>
